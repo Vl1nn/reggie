@@ -1,5 +1,7 @@
 package com.ann.reggie.filter;
 
+import com.alibaba.fastjson.JSON;
+import com.ann.reggie.common.R;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -17,45 +19,61 @@ import java.io.IOException;
 @WebFilter(filterName = "loginCheckFilter",urlPatterns = "/*")
 @Slf4j
 public class LoginCheckFilter implements Filter {
-//    路径匹配器 支持通配符
-    public static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+    //实例化路径匹配器，支持通配符
+    public static final AntPathMatcher PATH_MATCHER  = new AntPathMatcher();
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-//        向下转型
-        HttpServletRequest request = (HttpServletRequest) servletRequest;
-        HttpServletResponse response = (HttpServletResponse) servletResponse;
-        
-//        获取本次请求地址
-        String requestURI = request.getRequestURI();
-//        添加放行地址
+            HttpServletRequest request = (HttpServletRequest) servletRequest;
+            HttpServletResponse response = (HttpServletResponse) servletResponse;
+//        1.获取请求url
+        String uri = request.getRequestURI();
+        log.info("请求地址：{}",uri);
+        //定义不需要处理的的uri合集
         String[] urls = new String[]{
                 "/employee/login",
                 "/employee/logout",
-//                放行所有静态资源
                 "/backend/**",
                 "/front/**",
-            };
+        };
+//        2.判断本次请求是否需要拦截 参数：放行地址合集，本次请求地址
+        boolean check = check(urls, uri);
+        if (check){
+            log.info("本次请求：{}不需要处理",uri);
+            filterChain.doFilter(request,response);
+            return;
+        }
+//        判断用户是否登录
+        if (request.getSession().getAttribute("employee") != null) {
+            log.info("user logged in");
+            filterChain.doFilter(request,response);
+            return;
+        }
+//        未登录返回登录结果，
+        log.info("user not login");
+        response.getWriter().write(JSON.toJSONString(R.error("NOTLOGIN")));
+        return;
+/*
+       filterChain 是一个 FilterChain 对象
+       doFilter(请求,响应) 是 FilterChain 类中的一个方法，用于执行过滤链中 所有 的过滤器
+       可以对所有请求和响应进行处理
+ */
 
-        filterChain.doFilter(request,response);
     }
 
     /**
-     * 检查提供的URL数组中是否至少有一个URL与指定的请求URI匹配。
-     *
-     * @param urls 一个包含多个URL的字符串数组。
-     * @param requestURI 需要与URL进行匹配的请求URI字符串。
-     * @return 如果至少有一个URL与请求URI匹配，则返回true；否则返回false。
+     * 判断地址是否需要拦截的方法
+     * @param urls
+     * @param requestURI
+     * @return
      */
     public boolean check(String[] urls,String requestURI){
-        // 遍历提供的URL数组，检查每个URL是否与请求URI匹配
         for (String url : urls) {
+//            url 从数组循环到的地址  ，requestURI 本次请求地址
             boolean match = PATH_MATCHER.match(url, requestURI);
             if (match){
-                // 如果找到匹配的URL，则返回true
                 return true;
             }
         }
-        // 如果没有URL与请求URI匹配，则返回false
         return false;
     }
 }
