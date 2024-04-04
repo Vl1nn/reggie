@@ -32,8 +32,12 @@ public class Employee implements Serializable {
 
     private Integer status;
 
+//    自动填充策略：插入操作时填充
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
+//    自动填充策略插入、更新操作时填充
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
     @TableField(fill = FieldFill.INSERT)

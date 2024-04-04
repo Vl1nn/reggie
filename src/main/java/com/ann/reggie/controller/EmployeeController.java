@@ -4,7 +4,9 @@ import com.ann.reggie.common.R;
 import com.ann.reggie.entity.Employee;
 import com.ann.reggie.service.EmployeeService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -74,8 +76,52 @@ public class EmployeeController {
 //        创建人id 当前登录用户id
         employee.setCreateUser((Long) request.getSession().getAttribute("employee"));
         employee.setUpdateUser((Long) request.getSession().getAttribute("employee"));
+
         boolean save = employeeService.save(employee);
         if (save) return R.success("新增员工成功");
         return R.error("新增员工失败");
+    }
+
+    /**
+     * 员工分页查询
+     * @param page 页码
+     * @param pageSize 条目数
+     * @param name 员工姓名
+     * @return page对象
+     */
+    @GetMapping("/page")
+    public R<Page> page(int page,int pageSize,String name){
+//        构建分页对象
+        Page pageInfo= new Page(page,pageSize);
+//        queryWrapper
+        LambdaQueryWrapper<Employee> queryWrapper = new LambdaQueryWrapper<>();
+//       判断姓名是否为空
+        queryWrapper.like(StringUtils.isNotEmpty(name),Employee::getName,name);
+//        构造器添加排序条件 更新时间
+        queryWrapper.orderByDesc(Employee::getUpdateTime);
+        employeeService.page(pageInfo,queryWrapper);
+        return R.success(pageInfo);
+    }
+
+        /**
+     * 根据id修改员工信息
+     * @param employee
+     * @return
+     */
+    @PutMapping
+    public R<String> update(HttpServletRequest request,@RequestBody Employee employee){
+//        补全字段 更新时间 更新人
+        employee.setUpdateTime(LocalDateTime.now());
+        employee.setUpdateUser((Long) request.getSession().getAttribute("employee"));
+//MybatisPlus内置方法
+        employeeService.updateById(employee);
+        return R.success("修改成功!");
+    }
+
+    @GetMapping("/{id}")
+    public R<Employee> getById(@PathVariable Long id){
+        Employee employee = employeeService.getById(id);
+        if (employee != null) return R.success(employee);
+        return R.error("没有查询到该员工");
     }
 }
