@@ -111,8 +111,8 @@ public class EmployeeController {
     @PutMapping
     public R<String> update(HttpServletRequest request,@RequestBody Employee employee){
 //        补全字段 更新时间 更新人
-        employee.setUpdateTime(LocalDateTime.now());
-        employee.setUpdateUser((Long) request.getSession().getAttribute("employee"));
+//        employee.setUpdateTime(LocalDateTime.now());
+//        employee.setUpdateUser((Long) request.getSession().getAttribute("employee"));
 //MybatisPlus内置方法
         employeeService.updateById(employee);
         return R.success("修改成功!");
