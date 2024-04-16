@@ -53,7 +53,8 @@ public class Category implements Serializable {
     private Long updateUser;
 
 
-    //是否删除
+    //是否删除 逻辑删除 添加注解 mybatis不反射
+    @TableField(exist = false)
     private Integer isDeleted;
 
 }

@@ -67,16 +67,10 @@ public class EmployeeController {
      */
     @PostMapping
     public R<String> add(HttpServletRequest request,@RequestBody Employee employee){
+        long id = Thread.currentThread().getId();
+        log.info("处理线程：{}",id);
 //        设置初始密码
         employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
-        //创建时间
-        employee.setCreateTime(LocalDateTime.now());
-//        更新时间
-        employee.setUpdateTime(LocalDateTime.now());
-//        创建人id 当前登录用户id
-        employee.setCreateUser((Long) request.getSession().getAttribute("employee"));
-        employee.setUpdateUser((Long) request.getSession().getAttribute("employee"));
-
         boolean save = employeeService.save(employee);
         if (save) return R.success("新增员工成功");
         return R.error("新增员工失败");
@@ -110,10 +104,7 @@ public class EmployeeController {
      */
     @PutMapping
     public R<String> update(HttpServletRequest request,@RequestBody Employee employee){
-//        补全字段 更新时间 更新人
-//        employee.setUpdateTime(LocalDateTime.now());
-//        employee.setUpdateUser((Long) request.getSession().getAttribute("employee"));
-//MybatisPlus内置方法
+//        现交由元数据处理对象补全字段 更新时间 更新人
         employeeService.updateById(employee);
         return R.success("修改成功!");
     }
